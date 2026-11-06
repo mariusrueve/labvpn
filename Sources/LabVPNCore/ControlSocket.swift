@@ -73,7 +73,7 @@ public enum ControlSocket {
         let bytes = [UInt8](data) + [0x0a]
         var offset = 0
         while offset < bytes.count {
-            let written = bytes[offset...].withUnsafeBytes { write(handle, $0.baseAddress, $0.count) }
+            let written = bytes[offset...].withUnsafeBytes { send(handle, $0.baseAddress, $0.count, MSG_NOSIGNAL) }
             guard written > 0 else { return false }
             offset += written
         }
@@ -115,15 +115,17 @@ public final class ControlServer {
         Thread.detachNewThread { [self] in acceptLoop(handle) }
     }
 
+    /// The accept thread closes the socket when it leaves. Closing it here could
+    /// hand the same descriptor to a new socket while that thread still uses it.
     public func stop() {
         guard listener >= 0 else { return }
         shutdown(listener, SHUT_RDWR)
-        close(listener)
         listener = -1
         unlink(path)
     }
 
     private func acceptLoop(_ handle: Int32) {
+        defer { close(handle) }
         while true {
             let client = accept(handle, nil, nil)
             if client < 0 {

@@ -60,6 +60,8 @@ when you learn something the code can't show.
 
 - **Ignore SIGPIPE, and use `SO_NOSIGPIPE` and throwing writes.** A write to a closed
   socket or pipe otherwise kills the process, including the root helper. Slow CI found this.
+- Don't close a socket another thread is blocked on: the number can be reused at once. Shut it
+  down, and let the owning thread close it.
 - A blocking call doesn't belong on GCD's global queue: it can starve the pool on small
   machines. Use a thread.
 

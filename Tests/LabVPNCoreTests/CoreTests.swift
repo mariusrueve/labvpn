@@ -627,7 +627,10 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
 
         // Connect, send a request, and hang up before the reply.
         let client = socket(AF_UNIX, SOCK_STREAM, 0)
+        var enabled: Int32 = 1
+        setsockopt(client, SOL_SOCKET, SO_NOSIGPIPE, &enabled, socklen_t(MemoryLayout<Int32>.size))
         var address = sockaddr_un()
+        address.sun_len = UInt8(MemoryLayout<sockaddr_un>.size)
         address.sun_family = sa_family_t(AF_UNIX)
         withUnsafeMutableBytes(of: &address.sun_path) { $0.copyBytes(from: Array(path.utf8)) }
         let connected = withUnsafePointer(to: &address) {
