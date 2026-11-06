@@ -1,0 +1,14 @@
+labvpn is licensed under the Apache License 2.0 (labvpn-LICENSE).
+
+It ships these separate programs and libraries, unmodified unless noted. They are
+dynamically linked, so you can replace them. Exact versions and hashes are in
+Contents/Library/Helper/MANIFEST.txt. scripts/build-openconnect.sh in the labvpn
+repository rebuilds them from source.
+
+OpenConnect    LGPL-2.1     https://www.infradead.org/openconnect/
+GnuTLS         LGPL-2.1+    https://www.gnutls.org/
+Nettle         LGPL-3+ or GPL-2+    https://www.lysator.liu.se/~nisse/nettle/
+GMP            LGPL-3+ or GPL-2+    https://gmplib.org/
+vpnc-script    GPL-2+       https://gitlab.com/openconnect/vpnc-scripts
+               Modified: the `networksetup -setdnsservers` calls are removed.
+               The modified script is Resources/vpnc-script in the labvpn repository.

@@ -1,0 +1,19 @@
+{
+  "defaultProfile" : "zbh",
+  "profiles" : [
+    {
+      "auth" : "password",
+      "forceFullTunnel" : true,
+      "host" : "vpn2-aux2.rrz.uni-hamburg.de/VPNZBH",
+      "id" : "zbh",
+      "name" : "ZBH VPN"
+    },
+    {
+      "auth" : "browser-sso",
+      "forceFullTunnel" : true,
+      "host" : "vpn.rrz.uni-hamburg.de",
+      "id" : "uhh",
+      "name" : "UHH VPN"
+    }
+  ]
+}
