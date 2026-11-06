@@ -48,18 +48,19 @@ final class AppModel: ObservableObject {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
 
         let controller = self.controller
+        let log = self.log
         controller.onChange = { [weak self] status in
             Task { @MainActor in self?.apply(status) }
         }
-        watcher.onChange = { [weak self] in
-            self?.log.write("Physical network changed")
+        watcher.onChange = {
+            log.write("Physical network changed")
             controller.networkChanged()
         }
         watcher.start()
         observers.append(NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            self?.log.write("Woke from sleep")
+        ) { _ in
+            log.write("Woke from sleep")
             controller.didWake()
         })
         clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect().sink { [weak self] in self?.now = $0 }

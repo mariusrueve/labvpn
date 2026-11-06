@@ -58,6 +58,11 @@ when you learn something the code can't show.
 - In `ssh_config`, the first value wins, `%h` is still the short alias in an early `Match`,
   and an `Include` after a `Match` belongs to that block.
 
+- **Ignore SIGPIPE, and use `SO_NOSIGPIPE` and throwing writes.** A write to a closed
+  socket or pipe otherwise kills the process, including the root helper. Slow CI found this.
+- A blocking call doesn't belong on GCD's global queue: it can starve the pool on small
+  machines. Use a thread.
+
 ## Publishers
 
 - ACS, Wiley, Elsevier, Science and RSC answer non-browser requests with a Cloudflare

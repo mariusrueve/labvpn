@@ -49,7 +49,10 @@ public enum ControlSocket {
         return address
     }
 
-    fileprivate static func setTimeout(_ handle: Int32, _ seconds: Int) {
+    /// Sets timeouts, and stops a vanished peer from killing this process with SIGPIPE.
+    fileprivate static func configure(_ handle: Int32, timeout seconds: Int) {
+        var enabled: Int32 = 1
+        setsockopt(handle, SOL_SOCKET, SO_NOSIGPIPE, &enabled, socklen_t(MemoryLayout<Int32>.size))
         var limit = timeval(tv_sec: seconds, tv_usec: 0)
         setsockopt(handle, SOL_SOCKET, SO_RCVTIMEO, &limit, socklen_t(MemoryLayout<timeval>.size))
         setsockopt(handle, SOL_SOCKET, SO_SNDTIMEO, &limit, socklen_t(MemoryLayout<timeval>.size))
@@ -127,7 +130,8 @@ public final class ControlServer {
                 if errno == EINTR { continue }
                 return
             }
-            DispatchQueue.global().async { [self] in serve(client) }
+            // A thread each: serve blocks on the socket, which would tie up GCD's pool.
+            Thread.detachNewThread { [self] in serve(client) }
         }
     }
 
@@ -135,7 +139,7 @@ public final class ControlServer {
         defer { close(client) }
         var uid: uid_t = 0, gid: gid_t = 0
         guard getpeereid(client, &uid, &gid) == 0, uid == allowedUID else { return }
-        ControlSocket.setTimeout(client, 5)
+        ControlSocket.configure(client, timeout: 5)
         guard let line = ControlSocket.readLine(client),
               let request = try? JSONDecoder().decode(ControlRequest.self, from: line),
               let reply = try? JSONEncoder.control.encode(handler(request)) else { return }
@@ -149,7 +153,7 @@ public enum ControlClient {
         let handle = socket(AF_UNIX, SOCK_STREAM, 0)
         guard handle >= 0 else { throw ControlError.socket(errno) }
         defer { close(handle) }
-        ControlSocket.setTimeout(handle, 5)
+        ControlSocket.configure(handle, timeout: 5)
 
         let connected = withUnsafePointer(to: &address) {
             $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(handle, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }

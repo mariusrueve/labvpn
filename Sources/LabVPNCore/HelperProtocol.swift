@@ -8,7 +8,7 @@ public enum HelperConstants {
     public static let configPath = installRoot + "/helper.conf"
     public static let pidPath = "/var/run/labvpn/openconnect.pid"
     /// Bump when the helper, its scripts or this protocol change.
-    public static let version = 3
+    public static let version = 4
     /// Only the signed app may drive the helper.
     public static let clientRequirement = #"anchor apple generic and identifier "de.mariusrueve.labvpn" and certificate leaf[subject.OU] = "BRW9TTP8R5""#
 }

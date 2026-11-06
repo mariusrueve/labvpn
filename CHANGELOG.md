@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Fixes a crash in the app, CLI and helper when the other end of a socket or pipe
+  went away during a write. Found by CI. The helper updates itself on first launch.
+
 ## 0.3.0
 
 First public release.

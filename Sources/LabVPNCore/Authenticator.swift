@@ -80,7 +80,8 @@ public final class Authenticator: Authenticating {
             lock.unlock()
         }
 
-        if let password { input.fileHandleForWriting.write(Data((password + "\n").utf8)) }
+        // The throwing form: openconnect may already have exited.
+        if let password { try? input.fileHandleForWriting.write(contentsOf: Data((password + "\n").utf8)) }
         try? input.fileHandleForWriting.close()
 
         // Nothing reports a closed browser window, so sign-in needs a time limit.

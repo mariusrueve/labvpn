@@ -50,8 +50,9 @@ final class TunnelManager {
                 }
             }
             try child.run()
-            input.fileHandleForWriting.write(Data((cookie + "\n").utf8))
-            try input.fileHandleForWriting.close()
+            // The throwing form: openconnect may already have exited.
+            try? input.fileHandleForWriting.write(contentsOf: Data((cookie + "\n").utf8))
+            try? input.fileHandleForWriting.close()
             try? FileManager.default.createDirectory(atPath: (HelperConstants.pidPath as NSString).deletingLastPathComponent,
                                                      withIntermediateDirectories: true)
             try? String(child.processIdentifier).write(toFile: HelperConstants.pidPath, atomically: true, encoding: .utf8)
@@ -201,6 +202,7 @@ guard let data = FileManager.default.contents(atPath: HelperConstants.configPath
     exit(1)
 }
 
+signal(SIGPIPE, SIG_IGN)
 stopOrphan()
 clearStaleState()
 let delegate = ListenerDelegate(config: config)

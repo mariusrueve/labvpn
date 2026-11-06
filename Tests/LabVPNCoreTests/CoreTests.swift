@@ -161,7 +161,7 @@ import Darwin
         #expect(bound == 0)
         let port = UInt16(bigEndian: address.sin_port)
 
-        DispatchQueue.global().async {
+        Thread.detachNewThread {
             var packet = [UInt8](repeating: 0, count: 512)
             var peer = sockaddr_storage()
             var peerSize = socklen_t(MemoryLayout<sockaddr_storage>.size)
@@ -173,7 +173,7 @@ import Darwin
                 $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { sendto(server, packet, length, 0, $0, peerSize) }
             }
         }
-        #expect(TunnelProbe.dnsResponds(server: "127.0.0.1", port: port, interface: nil, timeout: 2))
+        #expect(TunnelProbe.dnsResponds(server: "127.0.0.1", port: port, interface: nil, timeout: 10))
         // The responder answers only once, so this one must time out.
         #expect(!TunnelProbe.dnsResponds(server: "127.0.0.1", port: port, interface: nil, timeout: 0.2))
     }
@@ -612,6 +612,35 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
         #expect(reply.status.state == .connected)
         #expect(reply.status.profileID == "uhh")
         #expect(reply.status.connectedSince == since)
+    }
+
+    @Test func clientVanishingDoesNotKillTheServer() throws {
+        let path = socketPath()
+        let answered = DispatchSemaphore(value: 0)
+        let server = ControlServer(path: path) { _ in
+            usleep(200_000)
+            answered.signal()
+            return ControlResponse(status: ControllerStatus())
+        }
+        try server.start()
+        defer { server.stop() }
+
+        // Connect, send a request, and hang up before the reply.
+        let client = socket(AF_UNIX, SOCK_STREAM, 0)
+        var address = sockaddr_un()
+        address.sun_family = sa_family_t(AF_UNIX)
+        withUnsafeMutableBytes(of: &address.sun_path) { $0.copyBytes(from: Array(path.utf8)) }
+        let connected = withUnsafePointer(to: &address) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(client, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+        }
+        #expect(connected == 0)
+        let request = Array(#"{"command":"status"}"#.utf8) + [0x0a]
+        #expect(write(client, request, request.count) == request.count)
+        close(client)
+
+        #expect(answered.wait(timeout: .now() + 10) == .success)
+        usleep(100_000)
+        #expect(try ControlClient.send(ControlRequest(command: .status), path: path).status.state == .disconnected)
     }
 
     @Test func socketIsPrivateToTheUser() throws {

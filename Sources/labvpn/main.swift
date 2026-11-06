@@ -62,6 +62,7 @@ func value(after flag: String, in arguments: [String]) -> String? {
     arguments.firstIndex(of: flag).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
 }
 
+signal(SIGPIPE, SIG_IGN)
 let arguments = Array(CommandLine.arguments.dropFirst())
 let usage = "Usage: labvpn setup <username> | connect [<profile>] [--timeout <s>] [--no-wait] | disconnect | reconnect | status [--json] | profiles | log [--follow]"
 

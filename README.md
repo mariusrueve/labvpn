@@ -23,8 +23,12 @@ Needs an Apple Silicon Mac with macOS 15 or later.
 ## Install
 
 ```bash
+brew tap mariusrueve/tap
+brew trust --cask mariusrueve/tap/labvpn
 brew install --cask mariusrueve/tap/labvpn
 ```
+
+Homebrew asks you to trust third-party casks once, which is what the second line does.
 
 ## Set up
 
