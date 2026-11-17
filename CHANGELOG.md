@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2
 
 - Fixes a gateway becoming unreachable ("Can't assign requested address") after a
   reconnect during a Wi-Fi change, until restart. A route to the gateway was left
