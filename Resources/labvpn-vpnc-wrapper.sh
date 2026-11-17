@@ -12,6 +12,8 @@ STATE_DIR=/var/run/labvpn
 VPNC_DIR=/var/run/vpnc
 RESOLV_CONF=/etc/resolv.conf
 IPV6_MARKER="$STATE_DIR/ipv6-rejected"
+# One gateway per line: host routes vpnc-script added and has not removed yet.
+GATEWAY_LIST="$STATE_DIR/gateway-routes"
 
 mkdir -p "$STATE_DIR"
 
@@ -30,6 +32,32 @@ ipv6_reject_remove() {
   "$ROUTE" -n delete -inet6 ::/1 >/dev/null 2>&1
   "$ROUTE" -n delete -inet6 8000::/1 >/dev/null 2>&1
   rm -f "$IPV6_MARKER"
+}
+
+gateway_remember() {
+  [ -n "$VPNGATEWAY" ] || return 0
+  grep -qxF "$VPNGATEWAY" "$GATEWAY_LIST" 2>/dev/null || echo "$VPNGATEWAY" >> "$GATEWAY_LIST"
+}
+
+gateway_forget() {
+  [ -n "$VPNGATEWAY" ] && [ -e "$GATEWAY_LIST" ] || return 0
+  grep -vxF "$VPNGATEWAY" "$GATEWAY_LIST" > "$GATEWAY_LIST.new"
+  mv -f "$GATEWAY_LIST.new" "$GATEWAY_LIST"
+}
+
+# A host route to the gateway that outlives its tunnel still names the Wi-Fi
+# address it was made with. Once DHCP hands out another address, every new
+# connection to that gateway fails with "Can't assign requested address".
+gateway_routes_remove() {
+  [ -e "$GATEWAY_LIST" ] || return 0
+  while read -r host; do
+    case "$host" in
+      "") ;;
+      *:*) "$ROUTE" -n delete -inet6 -host "$host" >/dev/null 2>&1 ;;
+      *) "$ROUTE" -n delete -host "$host" >/dev/null 2>&1 ;;
+    esac
+  done < "$GATEWAY_LIST"
+  rm -f "$GATEWAY_LIST"
 }
 
 # Undoes what vpnc-script's disconnect would have done, for a tunnel that died
@@ -61,10 +89,12 @@ restore_after_crash() {
   rm -f "$VPNC_DIR"/defaultroute.* "$VPNC_DIR"/defaultroute_ipv6.* "$VPNC_DIR"/resolv.conf-backup.*
 }
 
-# Called by the helper at startup and after openconnect is killed.
+# Called by the helper at startup, after openconnect exits and before it
+# starts, so only while no tunnel is running.
 if [ "$reason" = "labvpn-cleanup" ]; then
   ipv6_reject_remove
   restore_after_crash
+  gateway_routes_remove
   exit 0
 fi
 
@@ -91,7 +121,8 @@ esac
 status=$?
 
 case "$reason" in
-  connect) [ "$status" -eq 0 ] && ipv6_reject_add ;;
+  connect) gateway_remember; [ "$status" -eq 0 ] && ipv6_reject_add ;;
+  disconnect) [ "$status" -eq 0 ] && gateway_forget ;;
 esac
 
 exit "$status"

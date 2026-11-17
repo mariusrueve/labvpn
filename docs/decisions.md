@@ -18,6 +18,12 @@ when you learn something the code can't show.
   script puts `/usr/sbin` first.
 - `vpnc-script` deletes the default route on connect, so a killed tunnel leaves the Mac
   offline unless cleanup runs.
+- **Clean up after every openconnect exit, not only a kill.** openconnect can exit without
+  running the disconnect script ("Failed to spawn script … Interrupted system call"). The
+  gateway host route then stays, tied to the Wi-Fi address it was made with. After DHCP
+  hands out another address, every connection to that gateway fails with "Can't assign
+  requested address", while other gateways still work. The wrapper lists the gateways it
+  routed, and cleanup deletes those routes whenever no tunnel runs.
 
 ## Recovery
 

@@ -20,6 +20,8 @@ final class TunnelManager {
     func start(_ request: ConnectRequest, owner: ObjectIdentifier) throws {
         try queue.sync {
             if process?.isRunning == true { stopAndWait() }
+            // No tunnel runs now, so anything an earlier one left is stale.
+            clearStaleState()
 
             let child = Process()
             child.executableURL = URL(fileURLWithPath: HelperConstants.openconnectPath)
@@ -38,11 +40,12 @@ final class TunnelManager {
                 self?.queue.async {
                     guard let self, self.process === finished else { return }
                     try? FileManager.default.removeItem(atPath: HelperConstants.pidPath)
-                    // Killed outright, so vpnc-script's disconnect never ran.
+                    // vpnc-script's disconnect may not have run: openconnect was
+                    // killed, or failed to start the script while exiting.
                     if finished.terminationReason == .uncaughtSignal {
                         logger.error("openconnect was killed; restoring the network")
-                        clearStaleState()
                     }
+                    clearStaleState()
                     self.lastExitCode = finished.terminationStatus
                     self.process = nil
                     self.ownerID = nil

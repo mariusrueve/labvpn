@@ -54,7 +54,8 @@ rm -f "$tmp/route.log"
 run reason=connect LABVPN_FORCE_FULL_TUNNEL=0 "${split[@]}"
 grep -q 'CISCO_SPLIT_INC=2' "$tmp/seen-connect" || fail "force-off should keep gateway routes"
 run reason=labvpn-cleanup
-[[ "$(grep -c delete "$tmp/route.log")" == 2 ]] || fail "cleanup did not remove routes"
+[[ "$(grep -c "delete -inet6 [:8]" "$tmp/route.log")" == 2 ]] || fail "cleanup did not remove routes"
+grep -q "delete -host 134.100.1.1" "$tmp/route.log" || fail "cleanup did not remove the gateway route"
 
 rm -f "$tmp/route.log"
 run reason=connect INTERNAL_IP6_ADDRESS=2001:db8::5 VPNGATEWAY=134.100.1.1
@@ -91,6 +92,28 @@ echo 192.168.178.1 > "$tmp/vpnc/defaultroute.124"
 rm -f "$tmp/route.log"
 run reason=labvpn-cleanup
 grep -q 'add default' "$tmp/route.log" && fail "working default route was replaced"
+
+# Gateway host routes: forgotten after a clean disconnect.
+rm -f "$tmp/route.log" "$tmp/state/gateway-routes"
+run reason=connect VPNGATEWAY=134.100.57.178
+run reason=connect VPNGATEWAY=134.100.57.178
+[[ "$(grep -c . "$tmp/state/gateway-routes")" == 1 ]] || fail "gateway recorded twice"
+run reason=disconnect VPNGATEWAY=134.100.57.178
+grep -qs 134.100.57.178 "$tmp/state/gateway-routes" && fail "cleanly removed gateway still listed"
+
+# Gateway host routes: a disconnect that failed leaves the route to cleanup.
+run reason=connect VPNGATEWAY=134.100.57.178
+run reason=connect VPNGATEWAY=2001:db8::1
+run reason=disconnect FAKE_STATUS=1 VPNGATEWAY=134.100.57.178 || true
+grep -q 134.100.57.178 "$tmp/state/gateway-routes" || fail "failed disconnect forgot the gateway"
+rm -f "$tmp/route.log"
+run reason=labvpn-cleanup
+grep -q 'delete -host 134.100.57.178' "$tmp/route.log" || fail "stale gateway route not removed"
+grep -q 'delete -inet6 -host 2001:db8::1' "$tmp/route.log" || fail "stale IPv6 gateway route not removed"
+[[ ! -e "$tmp/state/gateway-routes" ]] || fail "gateway list left behind"
+rm -f "$tmp/route.log"
+run reason=labvpn-cleanup
+grep -qs 'delete -host' "$tmp/route.log" && fail "cleanup removed a gateway route twice"
 
 # The staged script must not touch the user's DNS settings.
 grep -q 'networksetup -setdnsservers' Resources/vpnc-script && fail "vpnc-script still resets DNS"

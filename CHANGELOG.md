@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fixes a gateway becoming unreachable ("Can't assign requested address") after a
+  reconnect during a Wi-Fi change, until restart. A route to the gateway was left
+  behind; the helper now removes it whenever no tunnel runs. The helper updates itself.
+
 ## 0.3.1
 
 - Fixes a crash in the app, CLI and helper when the other end of a socket or pipe
