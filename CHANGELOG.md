@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- labvpn has an app icon.
+- `labvpn --version` shows the installed version.
+
 ## 0.3.2
 
 - Fixes a gateway becoming unreachable ("Can't assign requested address") after a

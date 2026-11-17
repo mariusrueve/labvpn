@@ -1,4 +1,15 @@
-# labvpn
+<p align="center">
+  <img src="docs/images/icon.png" width="128" height="128" alt="labvpn icon">
+</p>
+
+<h1 align="center">labvpn</h1>
+
+<p align="center">
+  <a href="https://github.com/mariusrueve/labvpn/actions/workflows/ci.yml"><img src="https://github.com/mariusrueve/labvpn/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/mariusrueve/labvpn/releases/latest"><img src="https://img.shields.io/github/v/release/mariusrueve/labvpn" alt="Latest release"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/homebrew-mariusrueve%2Ftap%2Flabvpn-orange" alt="Homebrew"></a>
+  <img src="https://img.shields.io/badge/macOS-15%2B%20%C2%B7%20Apple%20Silicon-lightgrey" alt="macOS 15 or later, Apple Silicon">
+</p>
 
 A small macOS menu-bar app and command-line tool for Cisco AnyConnect VPNs, built on
 [OpenConnect](https://www.infradead.org/openconnect/).
