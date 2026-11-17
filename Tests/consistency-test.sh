@@ -16,6 +16,10 @@ label=de.mariusrueve.labvpn.helper
 grep -q "$label" Sources/LabVPNCore/HelperProtocol.swift || fail "helper label differs in HelperProtocol.swift"
 /usr/libexec/PlistBuddy -c 'Print :Label' "Resources/$label.plist" | grep -qx "$label" || fail "helper label differs in plist"
 
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+swift scripts/make-icon.swift --check docs/images/icon.png \
+  || fail "docs/images/icon.png is out of date: swift scripts/make-icon.swift build/icon, then copy build/icon/icon-512.png"
+
 if git ls-files | grep -v '^Tests/consistency-test.sh$' | xargs grep -lIE 'bari\.zbh|:7373|hessen|mrueve@' 2>/dev/null; then
   fail "the files above contain private host or account details"
 fi

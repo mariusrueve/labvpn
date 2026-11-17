@@ -7,6 +7,10 @@ cd "$(dirname "$0")/.."
 # SwiftUI macros need full Xcode, not just the Command Line Tools.
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 [[ -x build/stage/bin/openconnect ]] || scripts/build-openconnect.sh
+# The icon is drawn by code; redraw it when the script changes.
+if [[ ! build/icon/AppIcon.icns -nt scripts/make-icon.swift ]]; then
+  swift scripts/make-icon.swift build/icon
+fi
 swift build -c release
 bin="$(swift build -c release --show-bin-path)"
 
@@ -23,6 +27,7 @@ payload="$app/Contents/Library/Helper"
 licenses="$app/Contents/Resources/ThirdParty"
 mkdir -p "$app/Contents/MacOS" "$payload/bin" "$payload/lib" "$payload/scripts" "$licenses"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+cp build/icon/AppIcon.icns "$app/Contents/Resources/"
 cp "$bin/LabVPNApp" "$bin/labvpn" "$app/Contents/MacOS/"
 cp "$bin/labvpn-helper" build/stage/MANIFEST.txt Resources/de.mariusrueve.labvpn.helper.plist "$payload/"
 cp build/stage/bin/openconnect "$payload/bin/"
