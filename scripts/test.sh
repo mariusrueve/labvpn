@@ -7,4 +7,5 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 swift test --no-parallel
 Tests/wrapper-test.sh
 Tests/installer-test.sh
+Tests/bump-version-test.sh
 Tests/consistency-test.sh

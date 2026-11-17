@@ -64,9 +64,12 @@ func value(after flag: String, in arguments: [String]) -> String? {
 
 signal(SIGPIPE, SIG_IGN)
 let arguments = Array(CommandLine.arguments.dropFirst())
-let usage = "Usage: labvpn setup <username> | connect [<profile>] [--timeout <s>] [--no-wait] | disconnect | reconnect | status [--json] | profiles | log [--follow]"
+let usage = "Usage: labvpn --version | setup <username> | connect [<profile>] [--timeout <s>] [--no-wait] | disconnect | reconnect | status [--json] | profiles | log [--follow]"
 
 switch arguments.first {
+case "--version", "version":
+    // The CLI sits in the app bundle, so this is the app's Info.plist.
+    print(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown")
 case "setup":
     guard arguments.count == 2 else { fail("Usage: labvpn setup <username>") }
     guard var store = try? ProfileStore.load(), !store.profiles.isEmpty else {
