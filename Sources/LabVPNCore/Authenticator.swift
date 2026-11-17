@@ -31,8 +31,10 @@ public final class Authenticator: Authenticating {
     private let executable: String
     private let signInTimeout: TimeInterval
 
-    public init(executable: String = HelperConstants.openconnectPath, signInTimeout: TimeInterval = 300,
-                log: @escaping (String) -> Void) {
+    public init(
+        executable: String = HelperConstants.openconnectPath, signInTimeout: TimeInterval = 300,
+        log: @escaping (String) -> Void
+    ) {
         self.executable = executable
         self.signInTimeout = signInTimeout
         self.log = log
@@ -65,7 +67,9 @@ public final class Authenticator: Authenticating {
         var password: String?
         if profile.auth == .password {
             password = Keychain.password(account: Keychain.account(for: profile))
-            if password == nil { return .needsUser("No password stored for \(profile.name). Add it in Settings → Profiles.") }
+            if password == nil {
+                return .needsUser("No password stored for \(profile.name). Add it in Settings → Profiles.")
+            }
         }
 
         do { try process.run() } catch {

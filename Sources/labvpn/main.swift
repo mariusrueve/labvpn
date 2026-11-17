@@ -64,7 +64,8 @@ func value(after flag: String, in arguments: [String]) -> String? {
 
 signal(SIGPIPE, SIG_IGN)
 let arguments = Array(CommandLine.arguments.dropFirst())
-let usage = "Usage: labvpn --version | setup <username> | connect [<profile>] [--timeout <s>] [--no-wait] | disconnect | reconnect | status [--json] | profiles | log [--follow]"
+let usage =
+    "Usage: labvpn --version | setup <username> | connect [<profile>] [--timeout <s>] [--no-wait] | disconnect | reconnect | status [--json] | profiles | log [--follow]"
 
 switch arguments.first {
 case "--version", "version":
@@ -75,7 +76,9 @@ case "setup":
     guard var store = try? ProfileStore.load(), !store.profiles.isEmpty else {
         fail("No profiles yet. Create one in labvpn.app first.")
     }
-    store.profiles = store.profiles.map { var profile = $0; profile.username = arguments[1]; return profile }
+    store.profiles = store.profiles.map {
+        var profile = $0; profile.username = arguments[1]; return profile
+    }
     do { try store.save() } catch { fail("Cannot save profiles: \(error)") }
     guard let profile = store.profiles.first(where: { $0.auth == .password }) else {
         print("Saved.")
@@ -84,13 +87,17 @@ case "setup":
     guard let raw = getpass("Password for \(profile.name): ") else { fail("No password entered") }
     let password = String(cString: raw)
     guard !password.isEmpty else { fail("No password entered") }
-    do { try Keychain.setPassword(password, account: Keychain.account(for: profile)) } catch { fail("Keychain error: \(error)") }
+    do { try Keychain.setPassword(password, account: Keychain.account(for: profile)) } catch {
+        fail("Keychain error: \(error)")
+    }
     print("Saved username and password.")
 
 case "connect":
     var options = Array(arguments.dropFirst())
     let timeout = value(after: "--timeout", in: options).flatMap(TimeInterval.init) ?? 180
-    if let index = options.firstIndex(of: "--timeout") { options.removeSubrange(index...min(index + 1, options.count - 1)) }
+    if let index = options.firstIndex(of: "--timeout") {
+        options.removeSubrange(index...min(index + 1, options.count - 1))
+    }
     let wait = !options.contains("--no-wait")
     options.removeAll { $0 == "--no-wait" }
     let response = sendStartingApp(ControlRequest(command: .connect, profile: options.first))
@@ -116,7 +123,11 @@ case "reconnect":
 
 case "status":
     guard let response = send(ControlRequest(command: .status)) else {
-        if arguments.contains("--json") { printJSON(ControllerStatus()) } else { print("disconnected (app not running)") }
+        if arguments.contains("--json") {
+            printJSON(ControllerStatus())
+        } else {
+            print("disconnected (app not running)")
+        }
         exit(2)
     }
     if arguments.contains("--json") { printJSON(response.status) } else { print(response.status.summary) }

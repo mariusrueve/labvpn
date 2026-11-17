@@ -29,12 +29,14 @@ public final class TunnelSupervisor {
         public var phaseChanged: (Phase) -> Void
         public var log: (String) -> Void
 
-        public init(isRunning: @escaping () -> Bool, isHealthy: @escaping () -> Bool,
-                    stopKeepingSession: @escaping () -> Void, start: @escaping (AuthResult) -> Bool,
-                    reauthenticate: @escaping () -> ReauthResult, wait: @escaping (TimeInterval) -> Void,
-                    stopLoggingOff: @escaping () -> Void = {},
-                    isCancelled: @escaping () -> Bool = { false }, takeNetworkChange: @escaping () -> Bool = { false },
-                    phaseChanged: @escaping (Phase) -> Void = { _ in }, log: @escaping (String) -> Void) {
+        public init(
+            isRunning: @escaping () -> Bool, isHealthy: @escaping () -> Bool,
+            stopKeepingSession: @escaping () -> Void, start: @escaping (AuthResult) -> Bool,
+            reauthenticate: @escaping () -> ReauthResult, wait: @escaping (TimeInterval) -> Void,
+            stopLoggingOff: @escaping () -> Void = {},
+            isCancelled: @escaping () -> Bool = { false }, takeNetworkChange: @escaping () -> Bool = { false },
+            phaseChanged: @escaping (Phase) -> Void = { _ in }, log: @escaping (String) -> Void
+        ) {
             self.isRunning = isRunning
             self.isHealthy = isHealthy
             self.stopKeepingSession = stopKeepingSession

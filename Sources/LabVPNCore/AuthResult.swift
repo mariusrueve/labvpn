@@ -20,12 +20,13 @@ public struct AuthResult: Equatable, Sendable {
             values[key] = unquote(String(line[line.index(after: equals)...]))
         }
         guard let cookie = values["COOKIE"], !cookie.isEmpty,
-              let host = values["HOST"], !host.isEmpty,
-              let connectURL = values["CONNECT_URL"], !connectURL.isEmpty,
-              let fingerprint = values["FINGERPRINT"], !fingerprint.isEmpty
+            let host = values["HOST"], !host.isEmpty,
+            let connectURL = values["CONNECT_URL"], !connectURL.isEmpty,
+            let fingerprint = values["FINGERPRINT"], !fingerprint.isEmpty
         else { return nil }
         let resolve = values["RESOLVE"].flatMap { $0.isEmpty ? nil : $0 }
-        return AuthResult(cookie: cookie, host: host, connectURL: connectURL, fingerprint: fingerprint, resolve: resolve)
+        return AuthResult(
+            cookie: cookie, host: host, connectURL: connectURL, fingerprint: fingerprint, resolve: resolve)
     }
 
     /// A redirect can land on a node reached over IPv6, past the pin given to
@@ -37,8 +38,9 @@ public struct AuthResult: Equatable, Sendable {
             if inet_pton(AF_INET, String(resolve[resolve.index(after: colon)...]), &address) == 1 { return self }
         }
         guard let hostname = URLComponents(string: connectURL)?.host, let ipv4 = lookup(hostname) else { return self }
-        return AuthResult(cookie: cookie, host: host, connectURL: connectURL, fingerprint: fingerprint,
-                          resolve: "\(hostname):\(ipv4)")
+        return AuthResult(
+            cookie: cookie, host: host, connectURL: connectURL, fingerprint: fingerprint,
+            resolve: "\(hostname):\(ipv4)")
     }
 
     private static func unquote(_ raw: String) -> String {

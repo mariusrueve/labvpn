@@ -54,8 +54,10 @@ private struct FirstRunView: View {
                 }
             }
             if let error { Text(error).foregroundStyle(.red) }
-            Text("Your password is stored in your Keychain. macOS then asks for an admin password to install the VPN helper.")
-                .font(.footnote).foregroundStyle(.secondary)
+            Text(
+                "Your password is stored in your Keychain. macOS then asks for an admin password to install the VPN helper."
+            )
+            .font(.footnote).foregroundStyle(.secondary)
             HStack {
                 if model.pendingSetupFile == nil {
                     Button("Use Setup File…") { chooseFile() }
@@ -82,8 +84,9 @@ private struct FirstRunView: View {
             return
         }
         let title = name.trimmingCharacters(in: .whitespaces)
-        let profile = Profile(id: model.newProfileID(name: title), name: title, host: gateway,
-                              username: username.trimmingCharacters(in: .whitespaces), auth: auth)
+        let profile = Profile(
+            id: model.newProfileID(name: title), name: title, host: gateway,
+            username: username.trimmingCharacters(in: .whitespaces), auth: auth)
         error = model.finishSetup(profile: profile, password: password)
     }
 }
@@ -105,8 +108,9 @@ private struct GeneralTab: View {
     }
 
     private func binding<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>) -> Binding<Value> {
-        Binding(get: { model.settings[keyPath: keyPath] },
-                set: { value in model.updateSettings { $0[keyPath: keyPath] = value } })
+        Binding(
+            get: { model.settings[keyPath: keyPath] },
+            set: { value in model.updateSettings { $0[keyPath: keyPath] = value } })
     }
 }
 
@@ -117,12 +121,19 @@ private struct HelperTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label(statusText, systemImage: model.helperIsCurrent ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                .foregroundStyle(model.helperIsCurrent ? Color.green : Color.orange)
-            Text("The helper runs as root and starts the tunnel. Installing it asks for an admin password, and disconnects the VPN.")
-                .foregroundStyle(.secondary)
+            Label(
+                statusText, systemImage: model.helperIsCurrent ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
+            )
+            .foregroundStyle(model.helperIsCurrent ? Color.green : Color.orange)
+            Text(
+                "The helper runs as root and starts the tunnel. Installing it asks for an admin password, and disconnects the VPN."
+            )
+            .foregroundStyle(.secondary)
             HStack {
-                Button(model.helperVersion == nil ? "Install Helper…" : model.helperIsCurrent ? "Reinstall…" : "Update Helper…") {
+                Button(
+                    model.helperVersion == nil
+                        ? "Install Helper…" : model.helperIsCurrent ? "Reinstall…" : "Update Helper…"
+                ) {
                     perform { await model.installHelper() }
                 }
                 if model.helperVersion != nil {
@@ -161,8 +172,11 @@ private struct AboutTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("labvpn \(model.appVersion)").font(.title3)
-            Text(model.openconnectManifest?.split(separator: "\n").first.map(String.init) ?? "openconnect isn't installed")
-                .foregroundStyle(.secondary)
+            Text(
+                model.openconnectManifest?.split(separator: "\n").first.map(String.init)
+                    ?? "openconnect isn't installed"
+            )
+            .foregroundStyle(.secondary)
             HStack {
                 Button("View Log") { model.viewLog() }
                 Button("Export Diagnostics…") { exportDiagnostics() }

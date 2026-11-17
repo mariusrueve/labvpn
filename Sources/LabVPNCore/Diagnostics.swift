@@ -14,8 +14,10 @@ public enum Diagnostics {
     }
 
     /// The files in the zip, by name. `run` executes a tool and returns its output.
-    public static func files(store: ProfileStore?, log: String, manifest: String?, appVersion: String,
-                             run: (String, [String]) -> String) -> [String: String] {
+    public static func files(
+        store: ProfileStore?, log: String, manifest: String?, appVersion: String,
+        run: (String, [String]) -> String
+    ) -> [String: String] {
         let usernames = store?.profiles.map(\.username) ?? []
         var files = [
             "labvpn.log": scrub(log, usernames: usernames),

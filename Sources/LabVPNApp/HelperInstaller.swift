@@ -28,11 +28,11 @@ enum HelperInstaller {
         guard check.status == 0 else { return "labvpn.app is damaged. Reinstall it." }
 
         let source = """
-        on run argv
-            do shell script (quoted form of item 1 of argv) & " " & (item 2 of argv) ¬
-                with prompt "labvpn needs to change its VPN helper." with administrator privileges
-        end run
-        """
+            on run argv
+                do shell script (quoted form of item 1 of argv) & " " & (item 2 of argv) ¬
+                    with prompt "labvpn needs to change its VPN helper." with administrator privileges
+            end run
+            """
         let result = execute("/usr/bin/osascript", ["-e", source, script, action == .install ? String(getuid()) : ""])
         if result.status == 0 || result.output.contains("-128") { return nil }
         return result.output.trimmingCharacters(in: .whitespacesAndNewlines)

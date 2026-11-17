@@ -10,7 +10,8 @@ public enum HelperConstants {
     /// Bump when the helper, its scripts or this protocol change.
     public static let version = 5
     /// Only the signed app may drive the helper.
-    public static let clientRequirement = #"anchor apple generic and identifier "de.mariusrueve.labvpn" and certificate leaf[subject.OU] = "BRW9TTP8R5""#
+    public static let clientRequirement =
+        #"anchor apple generic and identifier "de.mariusrueve.labvpn" and certificate leaf[subject.OU] = "BRW9TTP8R5""#
 }
 
 /// Root-owned, written by install-helper.sh. Never read from a user-writable path.
@@ -30,8 +31,10 @@ public struct HelperStatus: Codable, Equatable, Sendable {
     /// Missing on helpers older than version 2.
     public var version: Int?
 
-    public init(running: Bool, pid: Int32? = nil, lastExitCode: Int32? = nil, lastLogLines: [String] = [],
-                version: Int? = HelperConstants.version) {
+    public init(
+        running: Bool, pid: Int32? = nil, lastExitCode: Int32? = nil, lastLogLines: [String] = [],
+        version: Int? = HelperConstants.version
+    ) {
         self.running = running
         self.pid = pid
         self.lastExitCode = lastExitCode

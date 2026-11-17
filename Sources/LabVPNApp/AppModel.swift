@@ -57,12 +57,13 @@ final class AppModel: ObservableObject {
             controller.networkChanged()
         }
         watcher.start()
-        observers.append(NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
-        ) { _ in
-            log.write("Woke from sleep")
-            controller.didWake()
-        })
+        observers.append(
+            NSWorkspace.shared.notificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+            ) { _ in
+                log.write("Woke from sleep")
+                controller.didWake()
+            })
         clock = Timer.publish(every: 30, on: .main, in: .common).autoconnect().sink { [weak self] in self?.now = $0 }
 
         let control = ControlServer { [weak self] request in
@@ -305,8 +306,9 @@ final class AppModel: ObservableObject {
         let store = self.store, manifest = openconnectManifest, version = appVersion
         return await Task.detached {
             let text = (try? String(contentsOf: AppLog.fileURL, encoding: .utf8)) ?? ""
-            let files = Diagnostics.files(store: store, log: text, manifest: manifest, appVersion: version,
-                                          run: Diagnostics.runTool)
+            let files = Diagnostics.files(
+                store: store, log: text, manifest: manifest, appVersion: version,
+                run: Diagnostics.runTool)
             do {
                 try Diagnostics.writeZip(files, to: url)
                 return nil
@@ -347,7 +349,8 @@ final class AppModel: ObservableObject {
         guard let profile = store.profile(id: profileID) else { return "Unknown profile \(profileID ?? "")" }
         let current = controller.status
         if current.profileID == profile.id,
-           [.authenticating, .connecting, .connected, .reconnecting, .fallbackDirect].contains(current.state) {
+            [.authenticating, .connecting, .connected, .reconnecting, .fallbackDirect].contains(current.state)
+        {
             return nil
         }
         controller.connect(profile, reconnectTimeout: store.settings.fallbackToDirectAfterSeconds)

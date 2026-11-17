@@ -29,7 +29,8 @@ public struct ControlResponse: Codable, Equatable, Sendable {
 }
 
 public enum ControlError: Error, Equatable {
-    case notRunning, badResponse, pathTooLong, socket(Int32)
+    case notRunning, badResponse, pathTooLong
+    case socket(Int32)
 }
 
 public enum ControlSocket {
@@ -88,23 +89,28 @@ public final class ControlServer {
     private let handler: (ControlRequest) -> ControlResponse
     private var listener: Int32 = -1
 
-    public init(path: String = ControlSocket.path, allowedUID: uid_t = getuid(),
-                handler: @escaping (ControlRequest) -> ControlResponse) {
+    public init(
+        path: String = ControlSocket.path, allowedUID: uid_t = getuid(),
+        handler: @escaping (ControlRequest) -> ControlResponse
+    ) {
         self.path = path
         self.allowedUID = allowedUID
         self.handler = handler
     }
 
     public func start() throws {
-        try FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent,
-                                                withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            atPath: (path as NSString).deletingLastPathComponent,
+            withIntermediateDirectories: true)
         unlink(path)
         var address = try ControlSocket.address(for: path)
         let handle = socket(AF_UNIX, SOCK_STREAM, 0)
         guard handle >= 0 else { throw ControlError.socket(errno) }
 
         let bound = withUnsafePointer(to: &address) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { bind(handle, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                bind(handle, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
         }
         guard bound == 0, chmod(path, 0o600) == 0, listen(handle, 8) == 0 else {
             let failure = errno
@@ -143,8 +149,9 @@ public final class ControlServer {
         guard getpeereid(client, &uid, &gid) == 0, uid == allowedUID else { return }
         ControlSocket.configure(client, timeout: 5)
         guard let line = ControlSocket.readLine(client),
-              let request = try? JSONDecoder().decode(ControlRequest.self, from: line),
-              let reply = try? JSONEncoder.control.encode(handler(request)) else { return }
+            let request = try? JSONDecoder().decode(ControlRequest.self, from: line),
+            let reply = try? JSONEncoder.control.encode(handler(request))
+        else { return }
         _ = ControlSocket.writeLine(client, reply)
     }
 }
@@ -158,12 +165,14 @@ public enum ControlClient {
         ControlSocket.configure(handle, timeout: 5)
 
         let connected = withUnsafePointer(to: &address) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(handle, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                connect(handle, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
         }
         guard connected == 0 else { throw ControlError.notRunning }
         guard let body = try? JSONEncoder().encode(request), ControlSocket.writeLine(handle, body),
-              let line = ControlSocket.readLine(handle),
-              let response = try? JSONDecoder.control.decode(ControlResponse.self, from: line)
+            let line = ControlSocket.readLine(handle),
+            let response = try? JSONDecoder.control.decode(ControlResponse.self, from: line)
         else { throw ControlError.badResponse }
         return response
     }

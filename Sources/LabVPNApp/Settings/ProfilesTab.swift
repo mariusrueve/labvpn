@@ -30,11 +30,15 @@ struct ProfilesTab: View {
             }
             .frame(width: 210)
 
-            if draft != nil { editor } else {
+            if draft != nil {
+                editor
+            } else {
                 Text("Select a profile").foregroundStyle(.secondary).frame(maxWidth: .infinity)
             }
         }
-        .onAppear { if selection == nil { selection = model.store?.defaultProfile } ; load(selection) }
+        .onAppear {
+            if selection == nil { selection = model.store?.defaultProfile }; load(selection)
+        }
         .onChange(of: selection) { _, id in
             // Add and Save change the selection themselves; keep their draft and message.
             if let id, id != draft?.id { load(id) }
@@ -91,7 +95,8 @@ struct ProfilesTab: View {
 
     private func add() {
         selection = nil
-        draft = Profile(id: "", name: "New Profile", host: "", username: model.profiles.first?.username ?? "", auth: .password)
+        draft = Profile(
+            id: "", name: "New Profile", host: "", username: model.profiles.first?.username ?? "", auth: .password)
         password = ""
         message = nil
     }

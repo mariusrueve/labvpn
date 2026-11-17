@@ -56,9 +56,11 @@ final class TunnelManager {
             // The throwing form: openconnect may already have exited.
             try? input.fileHandleForWriting.write(contentsOf: Data((cookie + "\n").utf8))
             try? input.fileHandleForWriting.close()
-            try? FileManager.default.createDirectory(atPath: (HelperConstants.pidPath as NSString).deletingLastPathComponent,
-                                                     withIntermediateDirectories: true)
-            try? String(child.processIdentifier).write(toFile: HelperConstants.pidPath, atomically: true, encoding: .utf8)
+            try? FileManager.default.createDirectory(
+                atPath: (HelperConstants.pidPath as NSString).deletingLastPathComponent,
+                withIntermediateDirectories: true)
+            try? String(child.processIdentifier).write(
+                toFile: HelperConstants.pidPath, atomically: true, encoding: .utf8)
             process = child
             ownerID = owner
             lastExitCode = nil
@@ -76,8 +78,9 @@ final class TunnelManager {
 
     func status() -> HelperStatus {
         queue.sync {
-            HelperStatus(running: process?.isRunning == true, pid: process?.processIdentifier,
-                         lastExitCode: lastExitCode, lastLogLines: logLines)
+            HelperStatus(
+                running: process?.isRunning == true, pid: process?.processIdentifier,
+                lastExitCode: lastExitCode, lastLogLines: logLines)
         }
     }
 
@@ -176,11 +179,13 @@ final class ListenerDelegate: NSObject, NSXPCListenerDelegate {
 /// run at once. Checks the path, because the pid may have been reused.
 func stopOrphan() {
     guard let text = try? String(contentsOfFile: HelperConstants.pidPath, encoding: .utf8),
-          let pid = Int32(text.trimmingCharacters(in: .whitespacesAndNewlines)) else { return }
+        let pid = Int32(text.trimmingCharacters(in: .whitespacesAndNewlines))
+    else { return }
     defer { try? FileManager.default.removeItem(atPath: HelperConstants.pidPath) }
     var buffer = [CChar](repeating: 0, count: 4096)
     guard proc_pidpath(pid, &buffer, UInt32(buffer.count)) > 0,
-          String(cString: buffer) == HelperConstants.openconnectPath else { return }
+        String(cString: buffer) == HelperConstants.openconnectPath
+    else { return }
     logger.log("Stopping orphaned openconnect \(pid)")
     kill(pid, SIGTERM)
     for _ in 0..<50 {
@@ -200,7 +205,8 @@ func clearStaleState() {
 }
 
 guard let data = FileManager.default.contents(atPath: HelperConstants.configPath),
-      let config = try? JSONDecoder().decode(HelperConfig.self, from: data) else {
+    let config = try? JSONDecoder().decode(HelperConfig.self, from: data)
+else {
     logger.fault("Cannot read \(HelperConstants.configPath, privacy: .public)")
     exit(1)
 }

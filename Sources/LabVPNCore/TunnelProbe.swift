@@ -15,7 +15,9 @@ public struct TunnelEnvironment: Equatable, Sendable {
         var address: String?
         for line in text.split(whereSeparator: \.isNewline) {
             if line.hasPrefix("TUNDEV=") { interface = String(line.dropFirst("TUNDEV=".count)) }
-            if line.hasPrefix("INTERNAL_IP4_ADDRESS=") { address = String(line.dropFirst("INTERNAL_IP4_ADDRESS=".count)) }
+            if line.hasPrefix("INTERNAL_IP4_ADDRESS=") {
+                address = String(line.dropFirst("INTERNAL_IP4_ADDRESS=".count))
+            }
             if line.hasPrefix("INTERNAL_IP4_DNS=") {
                 servers = line.dropFirst("INTERNAL_IP4_DNS=".count).split(separator: " ").map(String.init)
             }
@@ -50,7 +52,8 @@ public enum TunnelProbe {
 
     /// `interface` binds the socket to the tunnel, so an answer can't arrive
     /// over the direct path.
-    public static func dnsResponds(server: String, port: UInt16 = 53, interface: String?, timeout: TimeInterval) -> Bool {
+    public static func dnsResponds(server: String, port: UInt16 = 53, interface: String?, timeout: TimeInterval) -> Bool
+    {
         let handle = socket(AF_INET, SOCK_DGRAM, 0)
         guard handle >= 0 else { return false }
         defer { close(handle) }
@@ -58,7 +61,7 @@ public enum TunnelProbe {
         if let interface {
             var index = if_nametoindex(interface)
             guard index != 0,
-                  setsockopt(handle, IPPROTO_IP, IP_BOUND_IF, &index, socklen_t(MemoryLayout.size(ofValue: index))) == 0
+                setsockopt(handle, IPPROTO_IP, IP_BOUND_IF, &index, socklen_t(MemoryLayout.size(ofValue: index))) == 0
             else { return false }
         }
         var limit = timeval(tv_sec: Int(timeout), tv_usec: Int32((timeout - timeout.rounded(.down)) * 1_000_000))

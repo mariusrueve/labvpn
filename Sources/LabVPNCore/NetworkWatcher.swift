@@ -13,7 +13,9 @@ public struct PhysicalPathTracker: Sendable {
     public init() {}
 
     public static func isPhysical(_ name: String) -> Bool {
-        !["utun", "ipsec", "ppp", "lo", "gif", "stf", "awdl", "llw", "bridge", "anpi", "ap"].contains { name.hasPrefix($0) }
+        !["utun", "ipsec", "ppp", "lo", "gif", "stf", "awdl", "llw", "bridge", "anpi", "ap"].contains {
+            name.hasPrefix($0)
+        }
     }
 
     public static func identity(interfaces: [String], address: (String) -> String?) -> String? {
@@ -58,7 +60,8 @@ public final class NetworkWatcher {
 
     private func handle(_ path: NWPath) {
         let names = path.availableInterfaces.map(\.name)
-        let identity = path.status == .satisfied
+        let identity =
+            path.status == .satisfied
             ? PhysicalPathTracker.identity(interfaces: names, address: Self.ipv4Address)
             : nil
         let changed = tracker.update(identity)
@@ -79,11 +82,15 @@ public final class NetworkWatcher {
         while let current = entry {
             defer { entry = current.pointee.ifa_next }
             guard String(cString: current.pointee.ifa_name) == interface,
-                  let address = current.pointee.ifa_addr,
-                  address.pointee.sa_family == sa_family_t(AF_INET) else { continue }
+                let address = current.pointee.ifa_addr,
+                address.pointee.sa_family == sa_family_t(AF_INET)
+            else { continue }
             var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-            guard getnameinfo(address, socklen_t(address.pointee.sa_len), &buffer, socklen_t(buffer.count),
-                              nil, 0, NI_NUMERICHOST) == 0 else { continue }
+            guard
+                getnameinfo(
+                    address, socklen_t(address.pointee.sa_len), &buffer, socklen_t(buffer.count),
+                    nil, 0, NI_NUMERICHOST) == 0
+            else { continue }
             return String(cString: buffer)
         }
         return nil

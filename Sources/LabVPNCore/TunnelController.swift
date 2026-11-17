@@ -16,9 +16,11 @@ public struct ControllerStatus: Codable, Equatable, Sendable {
     /// An SSO session ran out during recovery, as opposed to a failed sign-in.
     public var sessionExpired: Bool
 
-    public init(state: ConnectionState = .disconnected, profileID: String? = nil, profileName: String? = nil,
-                tunnelAddress: String? = nil, connectedSince: Date? = nil, message: String? = nil,
-                sessionExpired: Bool = false) {
+    public init(
+        state: ConnectionState = .disconnected, profileID: String? = nil, profileName: String? = nil,
+        tunnelAddress: String? = nil, connectedSince: Date? = nil, message: String? = nil,
+        sessionExpired: Bool = false
+    ) {
         self.state = state
         self.profileID = profileID
         self.profileName = profileName
@@ -92,8 +94,10 @@ public final class TunnelController {
     public var autoReconnect = true
     public var onChange: ((ControllerStatus) -> Void)?
 
-    public init(helper: TunnelHelper, authenticator: Authenticating, probe: @escaping () -> Bool,
-                tunnelAddress: @escaping () -> String?, log: @escaping (String) -> Void, timing: Timing = Timing()) {
+    public init(
+        helper: TunnelHelper, authenticator: Authenticating, probe: @escaping () -> Bool,
+        tunnelAddress: @escaping () -> String?, log: @escaping (String) -> Void, timing: Timing = Timing()
+    ) {
         self.helper = helper
         self.authenticator = authenticator
         self.probe = probe
@@ -228,9 +232,10 @@ public final class TunnelController {
         guard let auth = firstLogin(profile, id: id) else { return }
 
         func start(_ auth: AuthResult) -> Bool {
-            let request = ConnectRequest(connectURL: auth.connectURL, cookie: auth.cookie, fingerprint: auth.fingerprint,
-                                         resolve: auth.resolve, mtu: profile.mtu, reconnectTimeout: reconnectTimeout,
-                                         forceFullTunnel: profile.forceFullTunnel)
+            let request = ConnectRequest(
+                connectURL: auth.connectURL, cookie: auth.cookie, fingerprint: auth.fingerprint,
+                resolve: auth.resolve, mtu: profile.mtu, reconnectTimeout: reconnectTimeout,
+                forceFullTunnel: profile.forceFullTunnel)
             if let error = helper.connect(request) {
                 log(error)
                 return false
@@ -268,24 +273,26 @@ public final class TunnelController {
         }
         markConnected()
 
-        let supervisor = TunnelSupervisor(auth: auth, actions: .init(
-            isRunning: { [unowned self] in refreshRunning() },
-            isHealthy: { [unowned self] in !probeWorks || probe() },
-            stopKeepingSession: { [unowned self] in stopKeepingSession() },
-            start: start,
-            reauthenticate: { [unowned self] in authenticator.authenticate(profile, interactive: false) },
-            wait: { [unowned self] in pause($0) },
-            stopLoggingOff: { [unowned self] in
-                if refreshRunning() {
-                    _ = helper.disconnectLogoff()
-                    waitUntilStopped()
-                }
-            },
-            isCancelled: { [unowned self] in isCancelled(id) },
-            takeNetworkChange: { [unowned self] in take(\.pendingNetworkChange) },
-            phaseChanged: { [unowned self] in set($0 == .reconnecting ? .reconnecting : .fallbackDirect) },
-            log: log
-        ))
+        let supervisor = TunnelSupervisor(
+            auth: auth,
+            actions: .init(
+                isRunning: { [unowned self] in refreshRunning() },
+                isHealthy: { [unowned self] in !probeWorks || probe() },
+                stopKeepingSession: { [unowned self] in stopKeepingSession() },
+                start: start,
+                reauthenticate: { [unowned self] in authenticator.authenticate(profile, interactive: false) },
+                wait: { [unowned self] in pause($0) },
+                stopLoggingOff: { [unowned self] in
+                    if refreshRunning() {
+                        _ = helper.disconnectLogoff()
+                        waitUntilStopped()
+                    }
+                },
+                isCancelled: { [unowned self] in isCancelled(id) },
+                takeNetworkChange: { [unowned self] in take(\.pendingNetworkChange) },
+                phaseChanged: { [unowned self] in set($0 == .reconnecting ? .reconnecting : .fallbackDirect) },
+                log: log
+            ))
         supervisor.pollInterval = timing.poll
         supervisor.autoRecover = autoReconnect
 

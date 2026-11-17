@@ -6,13 +6,13 @@ import Darwin
 @Suite struct AuthResultTests {
     @Test func parsesAuthenticateOutput() {
         let output = """
-        POST https://vpn.example.de/
-        COOKIE='abc@def=='
-        HOST='141.1.2.3'
-        CONNECT_URL='https://vpn2-aux2.rrz.uni-hamburg.de/VPNZBH'
-        FINGERPRINT='pin-sha256:elgCmsPTKxAlxrJcc1XbCyvNnwGWFhRw8jnCo2rYS4M='
-        RESOLVE='vpn2-aux2.rrz.uni-hamburg.de:141.1.2.3'
-        """
+            POST https://vpn.example.de/
+            COOKIE='abc@def=='
+            HOST='141.1.2.3'
+            CONNECT_URL='https://vpn2-aux2.rrz.uni-hamburg.de/VPNZBH'
+            FINGERPRINT='pin-sha256:elgCmsPTKxAlxrJcc1XbCyvNnwGWFhRw8jnCo2rYS4M='
+            RESOLVE='vpn2-aux2.rrz.uni-hamburg.de:141.1.2.3'
+            """
         let result = AuthResult.parse(output)
         #expect(result?.cookie == "abc@def==")
         #expect(result?.connectURL == "https://vpn2-aux2.rrz.uni-hamburg.de/VPNZBH")
@@ -26,17 +26,20 @@ import Darwin
     }
 
     @Test func redirectedIPv6NodeIsMovedToIPv4() {
-        let auth = AuthResult(cookie: "c", host: "h", connectURL: "https://vpn-asa2.rrz.uni-hamburg.de/", fingerprint: "f",
-                              resolve: "vpn-asa2.rrz.uni-hamburg.de:2001:638:710:445::c1ae:a742")
+        let auth = AuthResult(
+            cookie: "c", host: "h", connectURL: "https://vpn-asa2.rrz.uni-hamburg.de/", fingerprint: "f",
+            resolve: "vpn-asa2.rrz.uni-hamburg.de:2001:638:710:445::c1ae:a742")
         let moved = auth.preferringIPv4 { $0 == "vpn-asa2.rrz.uni-hamburg.de" ? "193.174.167.66" : nil }
         #expect(moved.resolve == "vpn-asa2.rrz.uni-hamburg.de:193.174.167.66")
         #expect(moved.cookie == "c")
     }
 
     @Test func ipv4PinIsKeptAndMissingARecordChangesNothing() {
-        let pinned = AuthResult(cookie: "c", host: "h", connectURL: "https://a.de/", fingerprint: "f", resolve: "a.de:1.2.3.4")
+        let pinned = AuthResult(
+            cookie: "c", host: "h", connectURL: "https://a.de/", fingerprint: "f", resolve: "a.de:1.2.3.4")
         #expect(pinned.preferringIPv4 { _ in "9.9.9.9" } == pinned)
-        let ipv6 = AuthResult(cookie: "c", host: "h", connectURL: "https://a.de/", fingerprint: "f", resolve: "a.de:::1")
+        let ipv6 = AuthResult(
+            cookie: "c", host: "h", connectURL: "https://a.de/", fingerprint: "f", resolve: "a.de:::1")
         #expect(ipv6.preferringIPv4 { _ in nil } == ipv6)
     }
 
@@ -49,11 +52,14 @@ import Darwin
 @Suite struct ConnectRequestTests {
     let pin = "pin-sha256:elgCmsPTKxAlxrJcc1XbCyvNnwGWFhRw8jnCo2rYS4M="
 
-    func request(url: String = "https://vpn2-aux2.rrz.uni-hamburg.de/VPNZBH", cookie: String = "c",
-                 fingerprint: String? = nil, resolve: String? = "vpn.rrz.uni-hamburg.de:134.100.1.1",
-                 mtu: Int? = nil, timeout: Int = 15) -> ConnectRequest {
-        ConnectRequest(connectURL: url, cookie: cookie, fingerprint: fingerprint ?? pin,
-                       resolve: resolve, mtu: mtu, reconnectTimeout: timeout)
+    func request(
+        url: String = "https://vpn2-aux2.rrz.uni-hamburg.de/VPNZBH", cookie: String = "c",
+        fingerprint: String? = nil, resolve: String? = "vpn.rrz.uni-hamburg.de:134.100.1.1",
+        mtu: Int? = nil, timeout: Int = 15
+    ) -> ConnectRequest {
+        ConnectRequest(
+            connectURL: url, cookie: cookie, fingerprint: fingerprint ?? pin,
+            resolve: resolve, mtu: mtu, reconnectTimeout: timeout)
     }
 
     @Test func acceptsValidRequest() throws {
@@ -140,7 +146,9 @@ import Darwin
 @Suite struct TunnelProbeTests {
     @Test func parsesTunnelEnvironment() {
         let text = "INTERNAL_IP4_DNS=134.100.33.240 134.100.9.61\nTUNDEV=utun6\nVPNGATEWAY=1.2.3.4\n"
-        #expect(TunnelEnvironment.parse(text) == TunnelEnvironment(interface: "utun6", dnsServers: ["134.100.33.240", "134.100.9.61"]))
+        #expect(
+            TunnelEnvironment.parse(text)
+                == TunnelEnvironment(interface: "utun6", dnsServers: ["134.100.33.240", "134.100.9.61"]))
         #expect(TunnelEnvironment.parse("TUNDEV=utun6\n") == nil)
     }
 
@@ -166,7 +174,9 @@ import Darwin
             var peer = sockaddr_storage()
             var peerSize = socklen_t(MemoryLayout<sockaddr_storage>.size)
             let length = withUnsafeMutablePointer(to: &peer) {
-                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { recvfrom(server, &packet, 512, 0, $0, &peerSize) }
+                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                    recvfrom(server, &packet, 512, 0, $0, &peerSize)
+                }
             }
             packet[2] |= 0x80
             _ = withUnsafePointer(to: &peer) {
@@ -198,26 +208,34 @@ import Darwin
         var maxLoops = 50
 
         func supervisor() -> TunnelSupervisor {
-            TunnelSupervisor(auth: TunnelSupervisorTests.make("old"), actions: .init(
-                isRunning: { self.running },
-                isHealthy: { self.healthy },
-                stopKeepingSession: { self.stops += 1; self.running = false },
-                start: { auth in
-                    if self.helperDown { return false }
-                    self.startedCookies.append(auth.cookie)
-                    // false means openconnect started and then exited.
-                    let ok = self.startResults.isEmpty ? true : self.startResults.removeFirst()
-                    let silent = self.silentStarts.contains(self.startedCookies.count - 1)
-                    self.running = ok || silent
-                    self.healthy = ok && self.healthyAfterStart && !silent
-                    return true
-                },
-                reauthenticate: { self.reauths += 1; return self.reauth },
-                wait: { self.waits.append($0) },
-                stopLoggingOff: { self.logoffs += 1; self.running = false },
-                isCancelled: { self.waits.count > self.maxLoops },
-                log: { _ in }
-            ))
+            TunnelSupervisor(
+                auth: TunnelSupervisorTests.make("old"),
+                actions: .init(
+                    isRunning: { self.running },
+                    isHealthy: { self.healthy },
+                    stopKeepingSession: {
+                        self.stops += 1; self.running = false
+                    },
+                    start: { auth in
+                        if self.helperDown { return false }
+                        self.startedCookies.append(auth.cookie)
+                        // false means openconnect started and then exited.
+                        let ok = self.startResults.isEmpty ? true : self.startResults.removeFirst()
+                        let silent = self.silentStarts.contains(self.startedCookies.count - 1)
+                        self.running = ok || silent
+                        self.healthy = ok && self.healthyAfterStart && !silent
+                        return true
+                    },
+                    reauthenticate: {
+                        self.reauths += 1; return self.reauth
+                    },
+                    wait: { self.waits.append($0) },
+                    stopLoggingOff: {
+                        self.logoffs += 1; self.running = false
+                    },
+                    isCancelled: { self.waits.count > self.maxLoops },
+                    log: { _ in }
+                ))
         }
     }
 
@@ -358,7 +376,9 @@ import Darwin
 @Suite struct AuthClassificationTests {
     @Test func rejectedPasswordStopsAndNetworkErrorRetries() {
         #expect(Authenticator.classify(status: 1, output: "", errors: "Login failed.\n") != .retryLater)
-        #expect(Authenticator.classify(status: 1, output: "", errors: "User input required in non-interactive mode") != .retryLater)
+        #expect(
+            Authenticator.classify(status: 1, output: "", errors: "User input required in non-interactive mode")
+                != .retryLater)
         #expect(Authenticator.classify(status: 1, output: "", errors: "Failed to connect to host") == .retryLater)
     }
 }
@@ -379,8 +399,12 @@ final class FakeHelper: TunnelHelper, @unchecked Sendable {
         running = !rejectCookies
         return nil
     }
-    func disconnectKeepSession() -> String? { lock.lock(); defer { lock.unlock() }; keeps += 1; running = false; return nil }
-    func disconnectLogoff() -> String? { lock.lock(); defer { lock.unlock() }; logoffs += 1; running = false; return nil }
+    func disconnectKeepSession() -> String? {
+        lock.lock(); defer { lock.unlock() }; keeps += 1; running = false; return nil
+    }
+    func disconnectLogoff() -> String? {
+        lock.lock(); defer { lock.unlock() }; logoffs += 1; running = false; return nil
+    }
     func status() -> HelperStatus? { lock.lock(); defer { lock.unlock() }; return HelperStatus(running: running) }
     func kill() { lock.lock(); defer { lock.unlock() }; running = false }
 }
@@ -399,14 +423,17 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
 @Suite struct TunnelControllerTests {
     let profile = Profile.presets(username: "u")[0]
 
-    func make(helper: FakeHelper, auth: FakeAuth = FakeAuth(), healthy: @escaping @Sendable () -> Bool = { true }) -> TunnelController {
+    func make(helper: FakeHelper, auth: FakeAuth = FakeAuth(), healthy: @escaping @Sendable () -> Bool = { true })
+        -> TunnelController
+    {
         var timing = TunnelController.Timing()
         timing.tick = 0.01
         timing.poll = 0.01
         timing.stopPoll = 0.001
         timing.backoffScale = 0.001
-        return TunnelController(helper: helper, authenticator: auth, probe: healthy,
-                                tunnelAddress: { "192.168.236.234" }, log: { _ in }, timing: timing)
+        return TunnelController(
+            helper: helper, authenticator: auth, probe: healthy,
+            tunnelAddress: { "192.168.236.234" }, log: { _ in }, timing: timing)
     }
 
     func waitFor(_ controller: TunnelController, _ state: ConnectionState) async -> Bool {
@@ -463,8 +490,9 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
         auth.result = .retryLater
         var timing = TunnelController.Timing()
         timing.backoffScale = 0.1
-        let controller = TunnelController(helper: FakeHelper(), authenticator: auth, probe: { true },
-                                          tunnelAddress: { nil }, log: { _ in }, timing: timing)
+        let controller = TunnelController(
+            helper: FakeHelper(), authenticator: auth, probe: { true },
+            tunnelAddress: { nil }, log: { _ in }, timing: timing)
         controller.connect(profile)
         try? await Task.sleep(nanoseconds: 250_000_000)
         #expect(auth.calls == 1)
@@ -604,7 +632,8 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
         let path = socketPath()
         let since = Date(timeIntervalSince1970: 1_800_000_000)
         let server = ControlServer(path: path) { request in
-            ControlResponse(status: ControllerStatus(state: .connected, profileID: request.profile, connectedSince: since))
+            ControlResponse(
+                status: ControllerStatus(state: .connected, profileID: request.profile, connectedSince: since))
         }
         try server.start()
         defer { server.stop() }
@@ -634,7 +663,9 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
         address.sun_family = sa_family_t(AF_UNIX)
         withUnsafeMutableBytes(of: &address.sun_path) { $0.copyBytes(from: Array(path.utf8)) }
         let connected = withUnsafePointer(to: &address) {
-            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(client, $0, socklen_t(MemoryLayout<sockaddr_un>.size)) }
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                connect(client, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
         }
         #expect(connected == 0)
         let request = Array(#"{"command":"status"}"#.utf8) + [0x0a]
@@ -657,10 +688,14 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
 
     @Test func otherUserIsRefused() throws {
         let path = socketPath()
-        let server = ControlServer(path: path, allowedUID: getuid() + 1) { _ in ControlResponse(status: ControllerStatus()) }
+        let server = ControlServer(path: path, allowedUID: getuid() + 1) { _ in
+            ControlResponse(status: ControllerStatus())
+        }
         try server.start()
         defer { server.stop() }
-        #expect(throws: ControlError.badResponse) { try ControlClient.send(ControlRequest(command: .status), path: path) }
+        #expect(throws: ControlError.badResponse) {
+            try ControlClient.send(ControlRequest(command: .status), path: path)
+        }
     }
 
     @Test func missingAppReportsNotRunning() {
@@ -695,7 +730,8 @@ final class FakeAuth: Authenticating, @unchecked Sendable {
 
     @Test func menuTitleShowsDuration() {
         let start = Date(timeIntervalSince1970: 0)
-        let status = ControllerStatus(state: .connected, profileName: "ZBH VPN", tunnelAddress: "1.2.3.4", connectedSince: start)
+        let status = ControllerStatus(
+            state: .connected, profileName: "ZBH VPN", tunnelAddress: "1.2.3.4", connectedSince: start)
         #expect(status.menuTitle(now: start.addingTimeInterval(720)) == "Connected · ZBH VPN · 12m · 1.2.3.4")
         #expect(status.menuTitle(now: start.addingTimeInterval(5400)) == "Connected · ZBH VPN · 1h 30m · 1.2.3.4")
     }
@@ -763,13 +799,16 @@ final class TrackerBox {
         timing.tick = 0.01
         timing.poll = 0.01
         timing.stopPoll = 0.001
-        let controller = TunnelController(helper: helper, authenticator: auth, probe: { true },
-                                          tunnelAddress: { nil }, log: { _ in }, timing: timing)
+        let controller = TunnelController(
+            helper: helper, authenticator: auth, probe: { true },
+            tunnelAddress: { nil }, log: { _ in }, timing: timing)
         controller.connect(uhh)
         for _ in 0..<500 where controller.status.state != .connected { try? await Task.sleep(nanoseconds: 5_000_000) }
         helper.rejectCookies = true
         helper.kill()
-        for _ in 0..<500 where controller.status.state != .needsUserAction { try? await Task.sleep(nanoseconds: 5_000_000) }
+        for _ in 0..<500 where controller.status.state != .needsUserAction {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(controller.status.sessionExpired)
         #expect(controller.status.profileID == "uhh")
     }
@@ -804,7 +843,8 @@ final class TrackerBox {
     }
 
     @Test func oldFileWithFingerprintStillLoads() throws {
-        let json = #"{"defaultProfile":"zbh","profiles":[{"id":"zbh","name":"Z","host":"a.uni-hamburg.de","username":"u","auth":"password","forceFullTunnel":true,"mtu":null,"pinnedFingerprint":null}]}"#
+        let json =
+            #"{"defaultProfile":"zbh","profiles":[{"id":"zbh","name":"Z","host":"a.uni-hamburg.de","username":"u","auth":"password","forceFullTunnel":true,"mtu":null,"pinnedFingerprint":null}]}"#
         #expect(try JSONDecoder().decode(ProfileStore.self, from: Data(json.utf8)).profiles.count == 1)
     }
 }
@@ -820,7 +860,8 @@ final class TrackerBox {
 
     @Test func importKeepsExistingUsernameAndDefault() throws {
         var source = ProfileStore(defaultProfile: "uhh", profiles: Profile.presets(username: "a"))
-        source.upsert(Profile(id: "lab", name: "Lab", host: "lab.example.org", username: "a", auth: .password, mtu: 1347))
+        source.upsert(
+            Profile(id: "lab", name: "Lab", host: "lab.example.org", username: "a", auth: .password, mtu: 1347))
         var target = ProfileStore(defaultProfile: "zbh", profiles: [Profile.presets(username: "mine")[0]])
         target.settings.connectOnLaunch = false
 
@@ -841,7 +882,8 @@ final class TrackerBox {
     }
 
     @Test func importSkipsInvalidGateways() throws {
-        let json = #"{"defaultProfile":"x","profiles":[{"id":"x","name":"X","host":"--script=/tmp/x","auth":"password","forceFullTunnel":true}]}"#
+        let json =
+            #"{"defaultProfile":"x","profiles":[{"id":"x","name":"X","host":"--script=/tmp/x","auth":"password","forceFullTunnel":true}]}"#
         var store = ProfileStore(defaultProfile: "zbh", profiles: Profile.presets(username: "u"))
         try store.importSetup(Data(json.utf8), username: "u")
         #expect(store.profile(id: "x") == nil)
@@ -866,7 +908,8 @@ final class TrackerBox {
     @Test func containsNoKennungOrCookie() {
         let store = ProfileStore(defaultProfile: "zbh", profiles: Profile.presets(username: "bax1234"))
         let log = "POST for bax1234\nCOOKIE=topsecret\nwebvpn=abc123; path=/\nConnected"
-        let files = Diagnostics.files(store: store, log: log, manifest: "OpenConnect v9.21", appVersion: "0.2.0") { path, _ in
+        let files = Diagnostics.files(store: store, log: log, manifest: "OpenConnect v9.21", appVersion: "0.2.0") {
+            path, _ in
             "output of \(path) for bax1234"
         }
         let everything = files.values.joined(separator: "\n")
@@ -889,7 +932,9 @@ final class TrackerBox {
 extension Profile {
     static func presets(username: String) -> [Profile] {
         [
-            Profile(id: "zbh", name: "ZBH VPN", host: "vpn2-aux2.rrz.uni-hamburg.de/VPNZBH", username: username, auth: .password),
+            Profile(
+                id: "zbh", name: "ZBH VPN", host: "vpn2-aux2.rrz.uni-hamburg.de/VPNZBH", username: username,
+                auth: .password),
             Profile(id: "uhh", name: "UHH VPN", host: "vpn.rrz.uni-hamburg.de", username: username, auth: .browserSSO),
         ]
     }

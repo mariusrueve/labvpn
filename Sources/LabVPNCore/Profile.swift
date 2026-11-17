@@ -14,8 +14,10 @@ public struct Profile: Codable, Equatable, Sendable {
     public var forceFullTunnel: Bool
     public var mtu: Int?
 
-    public init(id: String, name: String, host: String, username: String, auth: Auth,
-                forceFullTunnel: Bool = true, mtu: Int? = nil) {
+    public init(
+        id: String, name: String, host: String, username: String, auth: Auth,
+        forceFullTunnel: Bool = true, mtu: Int? = nil
+    ) {
         self.id = id
         self.name = name
         self.host = host
@@ -37,7 +39,8 @@ public struct Profile: Codable, Equatable, Sendable {
     }
 
     var gatewayError: String? {
-        ConnectRequest.isHostname(gatewayHostname.lowercased()) ? nil : "Enter a gateway such as vpn.example.org/GROUP, without https://."
+        ConnectRequest.isHostname(gatewayHostname.lowercased())
+            ? nil : "Enter a gateway such as vpn.example.org/GROUP, without https://."
     }
 
     /// Arguments for the unprivileged `--authenticate` step (SPEC 5.1). Pass
@@ -152,7 +155,9 @@ public struct ProfileStore: Codable, Equatable, Sendable {
     /// A `.labvpn` file: no usernames, fingerprints or secrets.
     public func exportSetup() throws -> Data {
         let shared = profiles.map {
-            SharedProfile(id: $0.id, name: $0.name, host: $0.host, auth: $0.auth, forceFullTunnel: $0.forceFullTunnel, mtu: $0.mtu)
+            SharedProfile(
+                id: $0.id, name: $0.name, host: $0.host, auth: $0.auth, forceFullTunnel: $0.forceFullTunnel, mtu: $0.mtu
+            )
         }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -166,12 +171,14 @@ public struct ProfileStore: Codable, Equatable, Sendable {
         let wasEmpty = profiles.isEmpty
         for shared in file.profiles {
             let existing = profiles.first { $0.id == shared.id }?.username
-            let profile = Profile(id: shared.id, name: shared.name, host: shared.host, username: existing ?? username,
-                                  auth: shared.auth, forceFullTunnel: shared.forceFullTunnel, mtu: shared.mtu)
+            let profile = Profile(
+                id: shared.id, name: shared.name, host: shared.host, username: existing ?? username,
+                auth: shared.auth, forceFullTunnel: shared.forceFullTunnel, mtu: shared.mtu)
             if profile.gatewayError == nil { upsert(profile) }
         }
         // A file must not quietly redirect an existing setup to its own gateway.
         guard wasEmpty else { return }
-        defaultProfile = profiles.contains { $0.id == file.defaultProfile } ? file.defaultProfile : profiles.first?.id ?? ""
+        defaultProfile =
+            profiles.contains { $0.id == file.defaultProfile } ? file.defaultProfile : profiles.first?.id ?? ""
     }
 }

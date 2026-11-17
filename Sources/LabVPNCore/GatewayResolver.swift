@@ -16,8 +16,11 @@ public enum GatewayResolver {
         guard getaddrinfo(hostname, nil, &hints, &result) == 0, let first = result else { return nil }
         defer { freeaddrinfo(result) }
         var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-        guard getnameinfo(first.pointee.ai_addr, first.pointee.ai_addrlen, &buffer, socklen_t(buffer.count),
-                          nil, 0, NI_NUMERICHOST) == 0 else { return nil }
+        guard
+            getnameinfo(
+                first.pointee.ai_addr, first.pointee.ai_addrlen, &buffer, socklen_t(buffer.count),
+                nil, 0, NI_NUMERICHOST) == 0
+        else { return nil }
         return String(cString: buffer)
     }
 }

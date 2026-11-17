@@ -11,8 +11,10 @@ public struct ConnectRequest: Codable, Equatable, Sendable {
     public var reconnectTimeout: Int
     public var forceFullTunnel: Bool
 
-    public init(connectURL: String, cookie: String, fingerprint: String, resolve: String?,
-                mtu: Int? = nil, reconnectTimeout: Int = 15, forceFullTunnel: Bool = true) {
+    public init(
+        connectURL: String, cookie: String, fingerprint: String, resolve: String?,
+        mtu: Int? = nil, reconnectTimeout: Int = 15, forceFullTunnel: Bool = true
+    ) {
         self.connectURL = connectURL
         self.cookie = cookie
         self.fingerprint = fingerprint
@@ -32,14 +34,15 @@ extension ConnectRequest {
     /// with `-`, so no value can act as a flag.
     public func validate() throws {
         guard let components = URLComponents(string: connectURL),
-              components.scheme == "https",
-              let host = components.host?.lowercased(), Self.isHostname(host),
-              components.user == nil, components.password == nil,
-              components.query == nil, components.fragment == nil,
-              connectURL.unicodeScalars.allSatisfy({ $0.value > 0x20 && $0.value < 0x7f })
+            components.scheme == "https",
+            let host = components.host?.lowercased(), Self.isHostname(host),
+            components.user == nil, components.password == nil,
+            components.query == nil, components.fragment == nil,
+            connectURL.unicodeScalars.allSatisfy({ $0.value > 0x20 && $0.value < 0x7f })
         else { throw ValidationError.invalidURL }
         guard !cookie.isEmpty, cookie.utf8.count <= 8192,
-              !cookie.contains(where: \.isNewline) else { throw ValidationError.invalidCookie }
+            !cookie.contains(where: \.isNewline)
+        else { throw ValidationError.invalidCookie }
         guard Self.isFingerprint(fingerprint) else { throw ValidationError.invalidFingerprint }
         if let resolve, !Self.isResolve(resolve) { throw ValidationError.invalidResolve }
         if let mtu, !(576...1500).contains(mtu) { throw ValidationError.invalidMTU }
@@ -61,10 +64,13 @@ extension ConnectRequest {
     }
 
     static func isHostname(_ value: String) -> Bool {
-        !value.isEmpty && value.count <= 253 && value.split(separator: ".", omittingEmptySubsequences: false).allSatisfy { label in
-            !label.isEmpty && !label.hasPrefix("-") && !label.hasSuffix("-")
-                && label.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) && $0.isASCII || $0 == "-" }
-        }
+        !value.isEmpty && value.count <= 253
+            && value.split(separator: ".", omittingEmptySubsequences: false).allSatisfy { label in
+                !label.isEmpty && !label.hasPrefix("-") && !label.hasSuffix("-")
+                    && label.unicodeScalars.allSatisfy {
+                        CharacterSet.alphanumerics.contains($0) && $0.isASCII || $0 == "-"
+                    }
+            }
     }
 
     private static func isFingerprint(_ value: String) -> Bool {

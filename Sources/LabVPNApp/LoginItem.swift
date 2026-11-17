@@ -33,7 +33,8 @@ enum LoginItem {
             "RunAtLoad": true,
         ]
         let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
-        try FileManager.default.createDirectory(at: agentURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: agentURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: agentURL, options: .atomic)
     }
 }
