@@ -1,0 +1,3 @@
+# Formatting-only commits; git blame skips them (git config blame.ignoreRevsFile .git-blame-ignore-revs).
+# Format Swift code with swift-format
+c515a871a8ebcd8146c25f152152155aad1bd339

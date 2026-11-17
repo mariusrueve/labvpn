@@ -10,5 +10,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: brew install shellcheck
       - name: Run all checks
         run: scripts/test.sh

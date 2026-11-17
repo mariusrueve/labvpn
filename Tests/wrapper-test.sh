@@ -119,6 +119,7 @@ grep -qs 'delete -host' "$tmp/route.log" && fail "cleanup removed a gateway rout
 grep -q 'networksetup -setdnsservers' Resources/vpnc-script && fail "vpnc-script still resets DNS"
 
 # The real script must install a default route once the variable is unset.
+# shellcheck disable=SC2016 # a literal search, nothing to expand
 grep -q 'elif \[ -n "$INTERNAL_IP4_ADDRESS" \]' Resources/vpnc-script \
   || fail "vpnc-script default-route branch changed; recheck the wrapper"
 echo "wrapper tests passed"

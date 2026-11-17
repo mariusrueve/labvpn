@@ -1,6 +1,8 @@
 #!/bin/sh
 # openconnect --script target. Runs as root from the root-owned install tree.
 # Forces a full tunnel, then hands over to the stock vpnc-script (SPEC 5.2).
+# openconnect sets reason, VPNGATEWAY, TUNDEV and the CISCO_* variables.
+# shellcheck disable=SC2154
 PATH=/usr/bin:/bin:/usr/sbin:/sbin
 export PATH
 
@@ -71,7 +73,7 @@ restore_after_crash() {
   if ! "$ROUTE" -n get default >/dev/null 2>&1; then
     for file in "$VPNC_DIR"/defaultroute.*; do
       saved=$(cat "$file" 2>/dev/null)
-      [ -n "$saved" ] && "$ROUTE" -n add default $saved >/dev/null 2>&1 && break
+      [ -n "$saved" ] && "$ROUTE" -n add default "$saved" >/dev/null 2>&1 && break
     done
   fi
   [ -n "$gateway" ] && "$ROUTE" -n delete -host "$gateway" >/dev/null 2>&1

@@ -164,4 +164,4 @@ done
   echo "openconnect-$openconnect_version sha256 $openconnect_sha256"
   (cd "$stage" && shasum -a 256 bin/openconnect lib/*.dylib scripts/vpnc-script)
 } > "$stage/MANIFEST.txt"
-echo "Built openconnect with $(ls "$stage/lib" | wc -l | tr -d ' ') libraries in $stage"
+echo "Built openconnect with $(find "$stage/lib" -name '*.dylib' | wc -l | tr -d ' ') libraries in $stage"

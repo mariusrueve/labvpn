@@ -7,6 +7,8 @@ src=build/src
 [[ -d "$src" ]] || { echo "Run scripts/build-openconnect.sh first" >&2; exit 1; }
 copy() {
   local file
+  # $1 is a glob, so it must stay unquoted.
+  # shellcheck disable=SC2012,SC2086
   file="$(ls $1 2>/dev/null | head -1)"
   [[ -n "$file" ]] || { echo "License not found: $1" >&2; exit 1; }
   cp "$file" "$target/$2"
