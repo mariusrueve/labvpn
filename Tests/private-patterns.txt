@@ -1,0 +1,6 @@
+# Private details that must never be committed: one extended regex per line.
+# Used by Tests/consistency-test.sh and the commit guard hook (.claude/hooks/commit-guard.sh).
+bari\.zbh
+:7373
+hessen
+mrueve@

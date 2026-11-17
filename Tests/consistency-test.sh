@@ -20,7 +20,8 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 swift scripts/make-icon.swift --check docs/images/icon.png \
   || fail "docs/images/icon.png is out of date: swift scripts/make-icon.swift build/icon, then copy build/icon/icon-512.png"
 
-if git ls-files | grep -v '^Tests/consistency-test.sh$' | xargs grep -lIE 'bari\.zbh|:7373|hessen|mrueve@' 2>/dev/null; then
+patterns="$(grep -v '^#' Tests/private-patterns.txt | paste -sd'|' -)"
+if git ls-files | grep -v '^Tests/private-patterns.txt$' | xargs grep -lIE "$patterns" 2>/dev/null; then
   fail "the files above contain private host or account details"
 fi
 echo "consistency tests passed"

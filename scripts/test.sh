@@ -9,4 +9,5 @@ swift test --no-parallel
 Tests/wrapper-test.sh
 Tests/installer-test.sh
 Tests/bump-version-test.sh
+Tests/hook-test.sh
 Tests/consistency-test.sh
