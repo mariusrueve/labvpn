@@ -10,12 +10,18 @@ person. Don't ask them to review code. Ask them for decisions and for live tests
 ## Commands
 
 ```bash
-scripts/test.sh       # everything automated; run before every commit
-scripts/build.sh      # dist/labvpn.app, signed if a Developer ID is present
-scripts/install.sh    # install to /Applications and relaunch
-scripts/release.sh    # build, notarize, staple; see docs/releasing.md
-labvpn log --follow   # live log of the installed app
+scripts/test.sh             # everything automated, lint first; run before every commit
+scripts/lint.sh             # swift-format and shellcheck only
+scripts/build.sh            # dist/labvpn.app, signed if a Developer ID is present
+scripts/install.sh          # install to /Applications and relaunch
+scripts/bump-version.sh X.Y.Z  # version in Info.plist and the CHANGELOG.md heading
+scripts/release.sh --dry-run   # then without --dry-run; see docs/releasing.md
+labvpn log --follow         # live log of the installed app
 ```
+
+Fix Swift style with `xcrun swift-format format -i -r Sources Tests Package.swift scripts/make-icon.swift`.
+The app icon is drawn by `scripts/make-icon.swift`; after changing it, copy
+`build/icon/icon-512.png` to `docs/images/icon.png`.
 
 Full Xcode is required. The scripts set `DEVELOPER_DIR` themselves; plain `swift test`
 or `swift build` may fail with Command Line Tools selected.
@@ -48,7 +54,15 @@ or `swift build` may fail with Command Line Tools selected.
 - `labvpn status` must never launch the app. Its first word is `connected` only while
   connected.
 - Never commit personal details: real usernames, internal hostnames, home network
-  details, log excerpts. `Tests/consistency-test.sh` catches a few of these.
+  details, log excerpts. `Tests/private-patterns.txt` lists some; add new ones there.
+
+## Agent tooling
+
+- `.claude/hooks/commit-guard.sh` runs before every `git commit` an agent makes here. It
+  blocks the commit if `scripts/test.sh` fails, or if the changes match
+  `Tests/private-patterns.txt`. Fix the cause; don't work around the hook.
+- Skills in `.claude/skills`: `release` (ship a version end to end), `diagnose` (why
+  won't it connect, from the log), `live-test` (what the owner should test for a change).
 
 ## Testing
 
