@@ -20,6 +20,7 @@ uid="${1:-}"
 
 payload="$(cd "$(dirname "$0")/.." && pwd -P)"
 app="$(cd "$payload/../../.." && pwd -P)"
+daemon="$DAEMON_DIR/$LABEL.plist"
 
 # Seals everything in the bundle, including this script and the wrapper.
 "$CODESIGN" --verify --deep --strict -R="$REQUIREMENT" "$app" \
@@ -36,16 +37,21 @@ install ${OWNER[@]+"${OWNER[@]}"} -m 644 "$payload/MANIFEST.txt" "$ROOT/MANIFEST
 printf '{"allowedUID":%d}\n' "$uid" > "$ROOT/helper.conf"
 chmod 644 "$ROOT/helper.conf"
 chown "$REQUIRED_USER" "$ROOT/helper.conf"
-install ${OWNER[@]+"${OWNER[@]}"} -m 644 "$payload/$LABEL.plist" "$DAEMON_DIR/$LABEL.plist"
+install ${OWNER[@]+"${OWNER[@]}"} -m 644 "$payload/$LABEL.plist" "$daemon"
 
 if find "$ROOT" \( -perm -g+w -o -perm -o+w -o ! -user "$REQUIRED_USER" \) | grep .; then
   echo "Refusing to start: the files above are writable by other users" >&2
   exit 1
 fi
 
+# install preserves quarantine from downloads, which launchd refuses to load.
+# Clear it only on the installed copies of the verified payload.
+/usr/bin/find "$ROOT" "$daemon" -xattrname com.apple.quarantine \
+  -exec /usr/bin/xattr -d com.apple.quarantine {} +
+
 # launchd may need a moment after bootout.
 for attempt in 1 2 3 4 5; do
-  "$LAUNCHCTL" bootstrap system "$DAEMON_DIR/$LABEL.plist" && break
+  "$LAUNCHCTL" bootstrap system "$daemon" && break
   [[ "$attempt" == 5 ]] && exit 1
   sleep 1
 done

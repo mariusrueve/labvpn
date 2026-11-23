@@ -20,6 +20,10 @@ FAKE
 cat > "$tmp/fake/launchctl" <<FAKE
 #!/bin/sh
 echo "\$*" >> "$tmp/launchctl.log"
+if [ "\$1" = bootstrap ] && [ -n "\$(find "$tmp/root/labvpn" "\$3" -xattrname com.apple.quarantine)" ]; then
+  echo "Refusing to load a quarantined helper" >&2
+  exit 1
+fi
 FAKE
 chmod +x "$tmp/fake/codesign" "$tmp/fake/launchctl"
 
@@ -58,6 +62,13 @@ grep -q '"allowedUID":501' "$tmp/root/labvpn/helper.conf" || fail "uid not recor
 [[ -e "$tmp/daemons/de.mariusrueve.labvpn.helper.plist" ]] || fail "daemon plist missing"
 grep -q bootstrap "$tmp/launchctl.log" || fail "helper not started"
 [[ -z "$(find "$tmp/root/labvpn" -perm -o+w)" ]] || fail "installed files are world-writable"
+
+# Downloaded apps carry quarantine on the plist and the executable payload.
+quarantine=com.apple.quarantine
+find "$payload" -type f -exec /usr/bin/xattr -w "$quarantine" '0081;00000000;LabVPNTest;' {} +
+install_helper X=1 || fail "install from a quarantined app failed"
+/usr/bin/xattr -p "$quarantine" "$payload/de.mariusrueve.labvpn.helper.plist" >/dev/null \
+  || fail "installer changed the quarantine marker on the source bundle"
 
 echo 99999 > "$tmp/state/openconnect.pid"
 "$payload/scripts/uninstall-helper.sh" >/dev/null || fail "uninstall failed"

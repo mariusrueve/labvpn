@@ -47,6 +47,9 @@ when you learn something the code can't show.
   `/opt/homebrew`, and GnuTLS reads config there. Anyone running as the user could gain root.
   So GnuTLS is built from source without p11-kit.
 - **`SMAppService.daemon` rejected:** root would run from a user-writable bundle.
+- **Clear download quarantine from installed helper copies only, after signature verification.**
+  macOS `install` preserves the attribute, and `launchd` rejects a quarantined daemon plist
+  with the generic “Bootstrap failed: 5” error.
 - **Login keychain, not data-protection:** that needs a provisioning profile. A stable Developer
   ID signature stops prompts after updates anyway.
 - **No certificate pinning.** Yearly renewals and load-balanced nodes cause false alarms.

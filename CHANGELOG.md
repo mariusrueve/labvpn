@@ -4,6 +4,7 @@
 
 - labvpn has an app icon.
 - `labvpn --version` shows the installed version.
+- Fixes helper installation failing with “Bootstrap failed: 5” after downloading the app.
 
 ## 0.3.2
 

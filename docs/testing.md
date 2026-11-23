@@ -27,6 +27,7 @@ These need a real gateway and account. Run the ones your change touches, and
 
 **Install**
 - [ ] Fresh install: first-run window, setup file, helper install
+- [ ] Install from a downloaded release (with quarantine still on the app): the helper starts and connects
 - [ ] Update: helper updates, with no Keychain prompt
 - [ ] Settings → Helper: Uninstall, then Install
 - [ ] Launch at Login after a reboot
