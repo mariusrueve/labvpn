@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.3.3
 
 - labvpn has an app icon.
 - `labvpn --version` shows the installed version.
 - Fixes helper installation failing with “Bootstrap failed: 5” after downloading the app.
+  The helper updates itself; macOS may ask for your admin password.
 
 ## 0.3.2
 
